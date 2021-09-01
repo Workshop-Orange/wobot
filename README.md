@@ -4,4 +4,6 @@ WOBOT is the Workshop Orange CLI bot for standardising and automating repeated t
 
 ## Installation
 
-composer global require workshop-orange/wobot
+`composer global require workshop-orange/wobot`
+
+
