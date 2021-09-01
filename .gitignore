@@ -6,4 +6,3 @@
 /database/database.sqlite
 .wobot*.log
 .wobot.yml
-/builds
