@@ -1,0 +1,23 @@
+deployment:
+  pre:
+    - class: App\Lagoon\DeploymentEngine\Step\Laravel\HelloStep
+#    - class: App\Lagoon\DeploymentEngine\Step\TestStepPass
+#    - class: App\Lagoon\DeploymentEngine\Step\TestStepFail
+  post:
+    - class: App\Lagoon\DeploymentEngine\Step\Laravel\HelloStep
+    - class: App\Lagoon\DeploymentEngine\Step\Laravel\GenericPreparePersistentStorageStep
+      persistent-storage: /app/storage/
+    - class:  App\Lagoon\DeploymentEngine\Step\Laravel\GenericPrepareDatabaseMigrateStep
+      database-config-file: /app/config/database.php
+    - class: App\Lagoon\DeploymentEngine\Step\Laravel\GenericPrepareDatabaseSeedStep
+      database-config-file: /app/config/database.php
+    - class: App\Lagoon\DeploymentEngine\Step\Laravel\GenericCheckPersistentStorageStep
+      persistent-storage: /app/storage/
+    - class:  App\Lagoon\DeploymentEngine\Step\Laravel\GenericCheckDatabaseStep
+      database-config-file: /app/config/database.php
+    - class: App\Lagoon\DeploymentEngine\Step\Laravel\GenericCheckRedisStep
+      database-config-file: /app/config/database.php
+      session-config-file: /app/config/session.php
+      cache-config-file: /app/config/cache.php
+    - class: App\Lagoon\DeploymentEngine\Step\Laravel\GenericCheckMeilisearchStep
+      scout-config-file: /app/config/scout.php
