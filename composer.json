@@ -25,7 +25,7 @@
         "intonate/tinker-zero": "^1.2",
         "newrelic/monolog-enricher": "^2.0",
         "predis/predis": "^1.1",
-        "symfony/process": "^5.3",
+        "symfony/process": "^5.2",
         "symfony/yaml": "^5.3"
     },
     "require-dev": {
