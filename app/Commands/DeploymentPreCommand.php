@@ -43,6 +43,7 @@ class DeploymentPreCommand extends Command
         try {
             $engine->loadSteps($deploymentFile, $stepsKey);
             $engine->setLogDirectory($logDir);
+            $engine->info("Wobot version: " . config('app.version'));
             $ret = $engine->executeDeploymentSteps();
             
             if ($ret > 0) {

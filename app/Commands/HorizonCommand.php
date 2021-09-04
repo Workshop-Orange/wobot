@@ -47,6 +47,7 @@ class HorizonCommand extends Command
             try {
                 $engine->loadSteps($deploymentFile, $preflightKey);
                 $engine->setLogDirectory($logDir);
+                $engine->info("Wobot version: " . config('app.version'));
                 $ret = $engine->executeDeploymentSteps();
                 
                 if ($ret > 0) {
@@ -63,7 +64,7 @@ class HorizonCommand extends Command
                     
                     while($process->isRunning()) {
                         $msecrun = microtime(true) - $process->getStartTime();
-                        
+
                         $engine->info("The horizon process has run for " . $msecrun . " seconds of {$maxRunSecs}.");
                         if($msecrun >= $maxRunSecs) {
                             $engine->warn("It is time for Horizon to die and restart.");
