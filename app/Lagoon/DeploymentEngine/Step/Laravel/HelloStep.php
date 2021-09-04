@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Lagoon\DeploymentEngine\Step\Laravel;
+
 use App\Lagoon\DeploymentEngine\Step\StepInterface;
 use App\Lagoon\DeploymentEngine\Step\StepBase;
 

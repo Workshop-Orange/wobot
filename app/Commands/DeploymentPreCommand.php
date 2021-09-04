@@ -54,6 +54,8 @@ class DeploymentPreCommand extends Command
             if ($ret > 255) {
                 $ret = 255;
             }
+
+            return $ret;
         } catch(Exception $ex) {
             $engine->error(empty($engine->getFailureMessage()) ? $ex->getMessage() : $engine->getFailureMessage());
             return $engine->getFailureCode() > 0 ? $engine->getFailureCode() : 255;

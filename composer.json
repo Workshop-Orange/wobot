@@ -20,8 +20,10 @@
         "guzzlehttp/guzzle": "^6.5.5",
         "illuminate/database": "^8.40",
         "illuminate/http": "^8.0",
+        "illuminate/log": "^8.0",
         "illuminate/redis": "^8.0",
         "intonate/tinker-zero": "^1.2",
+        "newrelic/monolog-enricher": "^2.0",
         "predis/predis": "^1.1",
         "symfony/process": "^5.3",
         "symfony/yaml": "^5.3"
