@@ -11,7 +11,7 @@
 |
 */
 
-$app = new LaravelZero\Framework\Application(
+$app = new App\Application(
     dirname(__DIR__)
 );
 
