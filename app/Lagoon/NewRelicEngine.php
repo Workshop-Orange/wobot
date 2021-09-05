@@ -40,13 +40,26 @@ class NewRelicEngine
             ])->get($endPoint, $data)->json();
     }
 
-    public function apiBaseJsonPost($endPoint, $data = [])
+    public function apiBaseJsonPOST($endPoint, $data = [])
     {
         return Http::withHeaders([
                 'Api-Key' => $this->USER_API_KEY
             ])->withOptions([
                 'base_uri' => $this->BASE_URL
             ])->post($endPoint, $data)->json();
+    }
+
+    public function apiBaseJsonPOSTRawJsonBody($endPoint, $body)
+    {
+        $result = Http::withHeaders([
+                'Api-Key' => $this->USER_API_KEY
+            ])->withOptions([
+                'base_uri' => $this->BASE_URL
+            ])->withBody(
+                $body, 'application/json'
+            )->post($endPoint);
+        
+            return ["code" => $result->status(), "json" => $result->json(), "message" => $result->body(), "headers" => $result->headers()];
     }
 
     public function apiSyntheticsJsonGET($endPoint, $data = [])
@@ -247,8 +260,18 @@ class NewRelicEngine
         return $result;
     }
 
-    public function createSyntheticPolicyConditionForMontior($monitorId, $policyId)
+    public function createSyntheticPolicyConditionForMontior($syntheticConditionName, $monitorId, $policyId)
     {
+        $jsonRequest = '{
+            "synthetics_condition": {
+              "name": "'.$syntheticConditionName.'",
+              "monitor_id": "'.$monitorId.'",
+              "enabled": true
+            }
+          }';
 
+        $result = $this->apiBaseJsonPOSTRawJsonBody("alerts_synthetics_conditions/policies/{$policyId}.json", $jsonRequest);
+        print_r($result);
+        return $result;
     }
 }

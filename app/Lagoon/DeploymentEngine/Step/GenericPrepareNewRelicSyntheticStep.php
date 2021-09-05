@@ -140,7 +140,7 @@ Class GenericPrepareNewRelicSyntheticStep extends StepBase implements StepInterf
                         $this->info("Synthetic Condition does not exists for " . $conditionName . ". Creating");
 
                         // TODO: BG Left Off Here
-                        $newRelicEngine->createSyntheticPolicyConditionForMontior($monitorId, $policyId);
+                        $createConditionResult = $newRelicEngine->createSyntheticPolicyConditionForMontior($conditionName, $monitorId, $policyId);
                     }
                 } else {
                     $this->warn("Connect to policy desired, but missing monitor ID means it is not possible for the monitor {$desiredMonitorName} for URL {$url}");
