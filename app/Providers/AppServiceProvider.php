@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Lagoon\DeploymentEngine\Engine;
+use App\Sanity\SanityEngine;
 use App\Lagoon\NewRelicEngine;
 use Illuminate\Support\ServiceProvider;
 
@@ -27,6 +28,18 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind("LagoonDeploymentEngine", function ($app) {
             $engine = new Engine();
+
+            return $engine;
+        });
+
+        $this->app->bind("SanityEngine", function ($app) {
+            $engine = new SanityEngine(
+                "sanity",
+                "./",
+                env('LAGOON_PROJECT',''),
+                env('SANITY_PROJECT_ID',''),
+                env('SANITY_STUDIO_API_DATASET','')
+            );
 
             return $engine;
         });

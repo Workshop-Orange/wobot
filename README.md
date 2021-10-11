@@ -6,4 +6,5 @@ WOBOT is the Workshop Orange CLI bot for standardising and automating repeated t
 
 `composer global require workshop-orange/wobot`
 
-
+## Troubleshooting
+Every now and then the build process overwrites the box.json - if you get a strange error that bootstrap/app.php is not in the phar, check box.json and reset its contents back to what is was for a successful build

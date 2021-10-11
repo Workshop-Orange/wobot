@@ -97,7 +97,7 @@ abstract class EngineBase implements EngineInterface
         return $this->callingCommand && $this->callingCommand->getOutput();
     }
 
-    public function runCommand(array $command): int
+    public function runCommand(array $command, array $env = null): int
     {
         $commandId = uniqid();
         $commandRunLogFile = $this->getLogDirectory() . DIRECTORY_SEPARATOR . ".wobot-{$this->usedLocation }-log-" . $this->runId . "-cmd-".$commandId.".log";
