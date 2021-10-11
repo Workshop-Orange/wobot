@@ -21,7 +21,7 @@ interface EngineInterface
     public function getFailureCode() : string;
     public function getFailureClass() : string;
 
-    public function runCommand(array $command) : int;
-    public function runPHPCommand(array $command) : int;
-    public function runLaravelArtisanCommand(array $command) : int;
+    public function runCommand(array $command, array $env = null) : int;
+    public function runPHPCommand(array $command,  array $env = null) : int;
+    public function runLaravelArtisanCommand(array $command,  array $env = null) : int;
 }

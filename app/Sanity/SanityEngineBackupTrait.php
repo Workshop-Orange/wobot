@@ -126,7 +126,7 @@ trait SanityEngineBackupTrait
             $this->sanityDataset,
             $tmpBackupFileUri,
             "--overwrite"
-        ]);
+        ], $env);
 
         if($ret > 0) {
             $this->setFailure(self::class, $ret, "Sanity export returned non-zero exit code");

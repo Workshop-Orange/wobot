@@ -102,7 +102,7 @@ abstract class EngineBase implements EngineInterface
         $commandId = uniqid();
         $commandRunLogFile = $this->getLogDirectory() . DIRECTORY_SEPARATOR . ".wobot-{$this->usedLocation }-log-" . $this->runId . "-cmd-".$commandId.".log";
         
-        $process = new Process($command);
+        $process = new Process($command, null, $env);
 
         $ret = $process->run();
         File::append($commandRunLogFile, "Out:\n" . $process->getOutput()."\n");
@@ -118,16 +118,16 @@ abstract class EngineBase implements EngineInterface
         return $ret;
     }
 
-    public function runPHPCommand(array $command): int
+    public function runPHPCommand(array $command, array $env = null): int
     {
         $fullCommandStack = array_merge(["php"], $command);
-        return $this->runCommand($fullCommandStack);
+        return $this->runCommand($fullCommandStack, $env);
     }
 
-    public function runLaravelArtisanCommand(array $command) : int
+    public function runLaravelArtisanCommand(array $command, array $env = null) : int
     {
         $fullCommandStack = array_merge(["artisan"], $command);
-        return $this->runPHPCommand($fullCommandStack);
+        return $this->runPHPCommand($fullCommandStack, $env);
     }
 
     public function info($log, $prefix = null)
