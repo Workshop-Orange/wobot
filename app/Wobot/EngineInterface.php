@@ -9,6 +9,11 @@ interface EngineInterface
     public function setCallingCommand(Command $callingCommand);
     public function getCallingCommand();
 
+    public function addMilestoneTracker(EngineMilestoneTrackerInterface $milestoneTracker);
+    public function getMilestoneTrackers();
+
+    public function loadTrackers(string $wobotConfigFilePath, string $configKey);
+
     public function setUsedLocation(string $usedLocation);
     public function getUsedLocation();
 
@@ -16,12 +21,16 @@ interface EngineInterface
     public function error($log, $prefix = null);
     public function warn($log, $prefix = null);
 
+    public function trackMilestone(string $category, string $message);
+    public function startTrackMilestones(string $message, array $fields = []);
+    public function endTrackMilestones(string $message, array $fields = []);
+
     public function setFailure(string $class, int $code, string $message);
     public function getFailureMessage() : string;
     public function getFailureCode() : string;
     public function getFailureClass() : string;
 
-    public function runCommand(array $command, array $env = null) : int;
-    public function runPHPCommand(array $command,  array $env = null) : int;
-    public function runLaravelArtisanCommand(array $command,  array $env = null) : int;
+    public function runCommand(array $command, array $env = null, int $timeout = 60) : int;
+    public function runPHPCommand(array $command,  array $env = null, int $timeout = 60) : int;
+    public function runLaravelArtisanCommand(array $command,  array $env = null, int $timeout = 60) : int;
 }

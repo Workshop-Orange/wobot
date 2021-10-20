@@ -39,10 +39,12 @@ Class GenericCheckMeilisearchStep extends StepBase implements StepInterface
 
         if($driver != "meilisearch" || !$host) {
             $this->warn("Scout is not configured, or meilisearch is not used. [Driver={$driver}] [Host={$host}]");
+            $this->engine->trackMilestone(get_class($this), "Scout is not configured, or meilisearch is not used. [Driver={$driver}] [Host={$host}]");
             return $this->getReturnCode();
         }
 
         $this->info("Scout is configured and meilisearch is used. [Driver={$driver}] [Host={$host}]");
+        $this->engine->trackMilestone(get_class($this), "Scout is configured and meilisearch is used. [Driver={$driver}] [Host={$host}]");
 
         try {
 
@@ -56,11 +58,15 @@ Class GenericCheckMeilisearchStep extends StepBase implements StepInterface
             $responsDataJson = $response->json();
             if(! $responsDataJson || ! is_array($responsDataJson) || ! isset($responsDataJson['indexes'])) {
                 $this->setFailure(255, "Scout is used, meili is used, but the host url doesn't return expected data. |".$response->body()."|");
+                $this->engine->trackMilestone(get_class($this), "Scout is used, meili is used, but the host url doesn't return expected data. |".$response->body()."|");
+                
                 return $this->getReturnCode();
             } else {
+                $this->engine->trackMilestone(get_class($this), "Meilisearch returned expected data.");
                 $this->info("Meilisearch returned expected data.");
             }
         } catch(\Exception $ex) {
+            $this->engine->trackMilestone(get_class($this), $ex->getMessage());
             $this->setFailure(255, $ex->getMessage());
             return $this->getReturnCode();
         }

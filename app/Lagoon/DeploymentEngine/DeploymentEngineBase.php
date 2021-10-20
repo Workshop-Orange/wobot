@@ -20,11 +20,50 @@ abstract class DeploymentEngineBase extends EngineBase implements DeploymentEngi
     protected $logFile;
     protected $usedLocation;
     protected $logDirectory;
+    protected $environment;
+    protected $service;
+    protected $prbase;
 
-    public function __construct($usedLocation = "deploy", $logDirectory = "./")
+    public function __construct($usedLocation = "deploy", $logDirectory = "./", $environment="", $service="", $prbase = "")
     {
         parent::__construct($usedLocation, $logDirectory);
         $this->deploymentSteps = collect([]);
+        $this->environment = $environment;
+        $this->service = $service;
+        $this->prbase = $prbase;
+    }
+
+    public function setPRBase($prbase) 
+    {
+        $this->prbase = $prbase;
+        return $this;
+    }
+
+    public function getPRBase()
+    {
+        return $this->prbase;
+    }
+
+    public function setEnvironment($environment) 
+    {
+        $this->environment = $environment;
+        return $this;
+    }
+
+    public function getEnvironment()
+    {
+        return $this->environment;
+    }
+
+    public function setService($service) 
+    {
+        $this->service = $service;
+        return $this;
+    }
+
+    public function getService()
+    {
+        return $this->service;
     }
 
     public function registerDeploymentStep(StepInterface $step)
@@ -42,13 +81,16 @@ abstract class DeploymentEngineBase extends EngineBase implements DeploymentEngi
     {
         foreach($this->deploymentSteps as $step)
         {
+            //$this->trackMilestone("step-start", "Starting execution: " . get_class($step));
             $stepRet = $step->execute();
             if($stepRet > 0) {
                 $this->setFailure(get_class($step), $step->getReturnCode(), $step->getFailureMessage());
                 return $stepRet;
             }
-        }
 
+            //$this->trackMilestone("step-end", "Finished execution: " . get_class($step));
+        }
+        
         // All steps returned 0, we're good
         return 0;
     }
@@ -85,10 +127,38 @@ abstract class DeploymentEngineBase extends EngineBase implements DeploymentEngi
                     throw new Exception($this->getFailureMessage(), $this->getFailureCode());                    
                 }
 
+                if(isset($configStep['match'])) {
+                    if(isset($configStep['match']['environment'])) {
+                        $matchEnvironment = $configStep['match']['environment'];
+                        if(! preg_match('/'. $matchEnvironment .'/', $this->environment)) {
+                            $this->info("[{$className}] Config match is set, but environment does not match: [match: {$matchEnvironment}] [environment: {$this->environment}]");
+                            continue;
+                        }
+                    }
+
+                    if(isset($configStep['match']['service'])) {
+                        $matchService = $configStep['match']['service'];
+                        if(! preg_match('/'. $matchService .'/', $this->service)) {
+                            $this->info("Config match is set, but service does not match: [match: {$matchService}] [service: {$this->service}]");
+                            continue;
+                        }
+                    }
+
+                    if(isset($configStep['match']['prbase'])) {
+                        $matchPRBase = $configStep['match']['prbase'];
+                        if(! preg_match('/'. $matchPRBase .'/', $this->prbase)) {
+                            $this->info("Config match is set, but prbase does not match: [match: {$matchPRBase}] [prbase: {$this->prbase}]");
+                            continue;
+                        }
+                    }
+                }
+                
                 $newStep = new $className($this, $configStep);
                 $this->registerDeploymentStep($newStep); 
             }
         }
+
+        $this->trackMilestone("init", "Steps loaded: " . $this->deploymentSteps->count());
 
         return $steps;
     }

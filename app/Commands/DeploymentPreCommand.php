@@ -15,7 +15,11 @@ class DeploymentPreCommand extends Command
     protected $signature = 'deployment:pre 
         {--wobot-conf=./.wobot.yml : Specify the wobot config file to use}
         {--steps-key=deployment.pre : Specify the dot notation key of deployment steps to use}
+        {--trackers-key=deployment.trackers : Specify the dot notation key of tracker configuration to use}
         {--log-dir=./ : Specify the directory to store the logfile}
+        {--this-environment= : Specify what environment this is}
+        {--this-service= : Specify what service this is}
+        {--this-prbase= : Specify what prbase this is}
     ';
 
     /**
@@ -34,22 +38,55 @@ class DeploymentPreCommand extends Command
     {
         $deploymentFile = $this->option("wobot-conf");
         $stepsKey = $this->option("steps-key");
+        $trackersKey = $this->option("trackers-key");
         $logDir = $this->option("log-dir");
+        $environment = $this->option("this-environment") ? $this->option("this-environment") : env('LAGOON_ENVIRONMENT');
+        $service = $this->option("this-service") ? $this->option("this-service") : env('SERVICE_NAME');
+        $prbase = $this->option("this-prbase") ? $this->option("this-prbase") : env('LAGOON_PR_BASE_BRANCH');
 
         $engine = app('LagoonDeploymentEngine');
         $engine->setUsedLocation('pre-deploy');
         $engine->setCallingCommand($this);
+        $engine->setService($service);
+        $engine->setEnvironment($environment);
+        $engine->setPRBase($prbase);
 
         try {
-            $engine->loadSteps($deploymentFile, $stepsKey);
+            $trackerFields = [
+                [
+                    "title" => "Environment",
+                    "value"=> $engine->getEnvironment(),
+                    "short"=> true
+                ], 
+                [
+                    "title" => "Service",
+                    "value"=> $engine->getService(),
+                    "short"=> true
+                ],
+            ];
+    
+            if($engine->getPRBase()) {
+                $trackerFields[] = [
+                    "title" => "PR Base",
+                    "value"=> $engine->getPRBase(),
+                    "short"=> true
+                ];
+            }
+
             $engine->setLogDirectory($logDir);
+            $engine->loadTrackers($deploymentFile, $trackersKey);
+            $engine->startTrackMilestones("Starting pre deployment", $trackerFields);
+
+            $engine->loadSteps($deploymentFile, $stepsKey);
             $engine->info("Wobot version: " . config('app.version'));
             $ret = $engine->executeDeploymentSteps();
             
             if ($ret > 0) {
                 $engine->error("Step failed: " . $engine->getFailureClass() ." [" . $engine->getFailureCode() . "] " . $engine->getFailureMessage());
+                $engine->endTrackMilestones("Step failed: " . $engine->getFailureClass() ." [" . $engine->getFailureCode() . "] " . $engine->getFailureMessage(),  $trackerFields);
             } else {
                 $engine->info("All steps completed successfully");
+                $engine->endTrackMilestones("All steps completed successfully", $trackerFields);
             }
     
             if ($ret > 255) {
