@@ -6,8 +6,8 @@ interface EngineMilestoneTrackerInterface
 {
     public function __construct(EngineInterface $engine, array $config = []);
     public function configure(array $config);
-    public function startTracker($message, array $fields = []);
-    public function trackMilestone(EngineMilestone $milestone);
-    public function endTracker($message, array $fields = []);
+    public function startTracker(string $milestoneId, $message, array $fields = []);
+    public function trackMilestoneProgress(EngineMilestone $milestone);
+    public function endTracker(string $milestoneId, $message, array $fields = [], bool $isOK = true);
 
 }

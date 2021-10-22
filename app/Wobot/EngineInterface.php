@@ -21,9 +21,9 @@ interface EngineInterface
     public function error($log, $prefix = null);
     public function warn($log, $prefix = null);
 
-    public function trackMilestone(string $category, string $message);
-    public function startTrackMilestones(string $message, array $fields = []);
-    public function endTrackMilestones(string $message, array $fields = []);
+    public function trackMilestoneProgress(string $milestoneId, string $message, bool $isOK = true);
+    public function startTrackMilestone(string $milestoneId, string $message, array $fields = []);
+    public function endTrackMilestone(string $milestoneId, string $message, array $fields = [], bool $isOK = true);
 
     public function setFailure(string $class, int $code, string $message);
     public function getFailureMessage() : string;

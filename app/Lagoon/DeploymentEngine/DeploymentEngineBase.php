@@ -81,14 +81,12 @@ abstract class DeploymentEngineBase extends EngineBase implements DeploymentEngi
     {
         foreach($this->deploymentSteps as $step)
         {
-            //$this->trackMilestone("step-start", "Starting execution: " . get_class($step));
             $stepRet = $step->execute();
+            
             if($stepRet > 0) {
                 $this->setFailure(get_class($step), $step->getReturnCode(), $step->getFailureMessage());
                 return $stepRet;
             }
-
-            //$this->trackMilestone("step-end", "Finished execution: " . get_class($step));
         }
         
         // All steps returned 0, we're good
@@ -158,7 +156,7 @@ abstract class DeploymentEngineBase extends EngineBase implements DeploymentEngi
             }
         }
 
-        $this->trackMilestone("init", "Steps loaded: " . $this->deploymentSteps->count());
+        $this->trackMilestoneProgress($this->getUsedLocation(), "Steps loaded: " . $this->deploymentSteps->count());
 
         return $steps;
     }

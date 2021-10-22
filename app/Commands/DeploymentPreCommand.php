@@ -75,7 +75,7 @@ class DeploymentPreCommand extends Command
 
             $engine->setLogDirectory($logDir);
             $engine->loadTrackers($deploymentFile, $trackersKey);
-            $engine->startTrackMilestones("Starting pre deployment", $trackerFields);
+            $engine->startTrackMilestone($engine->getUsedLocation(), "Starting pre deployment", $trackerFields);
 
             $engine->loadSteps($deploymentFile, $stepsKey);
             $engine->info("Wobot version: " . config('app.version'));
@@ -83,10 +83,12 @@ class DeploymentPreCommand extends Command
             
             if ($ret > 0) {
                 $engine->error("Step failed: " . $engine->getFailureClass() ." [" . $engine->getFailureCode() . "] " . $engine->getFailureMessage());
-                $engine->endTrackMilestones("Step failed: " . $engine->getFailureClass() ." [" . $engine->getFailureCode() . "] " . $engine->getFailureMessage(),  $trackerFields);
+                $engine->endTrackMilestone($engine->getUsedLocation(), 
+                    "Step failed: " . $engine->getFailureClass() ." [" . $engine->getFailureCode() . "] " . $engine->getFailureMessage(),  
+                    $trackerFields);
             } else {
                 $engine->info("All steps completed successfully");
-                $engine->endTrackMilestones("All steps completed successfully", $trackerFields);
+                $engine->endTrackMilestone($engine->getUsedLocation(), "All steps completed successfully", $trackerFields);
             }
     
             if ($ret > 255) {

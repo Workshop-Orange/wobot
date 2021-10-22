@@ -3,41 +3,28 @@
 namespace App\Wobot;
 
 use Illuminate\Support\Facades\Http;
-use GuzzleHttp\Client;
 use Illuminate\Support\Facades\File;
 
 class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements EngineMilestoneTrackerInterface
 {
     protected $slackToken;
     protected $slackChannel;
-    protected $threadId;
-    protected $maxBatch = 15;
+    protected $maxBatch = 2;
     protected $milestoneBatcher;
-    protected $deploymentthreadFile;
 
     public function configure(array $config)
     {
         parent::configure($config);
+        
         $this->slackToken = $this->config->get('tokenvar') ? env($this->config->get('tokenvar'),'') : '' ;
         $this->slackChannel = $this->config->get('channel');
         $this->engine->info("Slack token: " . $this->slackToken);
         $this->engine->info("Slack channel: " . $this->slackChannel);
         $this->milestoneBatcher = collect([]);
-
-
-        if($this->config->get('deploymentthread')) {
-            $this->deploymentthreadFile = $this->config->get('deploymentthread');
-            if(File::exists($this->deploymentthreadFile)) {
-                $this->engine->info("Reviving thread for deployment: " . $this->deploymentthreadFile);
-                $this->threadId = File::get($this->deploymentthreadFile);
-                $this->engine->info("Using thread: " . $this->threadId);
-            }
-        }
     }
 
-    public function trackMilestone(EngineMilestone $milestone)
+    public function trackMilestoneProgress(EngineMilestone $milestone)
     {
-        $this->engine->warn("SLACK TRACKER: [thread: {$this->threadId}] [category: {$milestone->getCategory()}] [message: {$milestone->getMessage()}]");
         $this->milestoneBatcher->push($milestone);
 
         if($this->milestoneBatcher->count() >= $this->maxBatch) {
@@ -52,9 +39,9 @@ class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements 
         while($milestone = $this->milestoneBatcher->shift()) {
             $attachments[] = [
                 "fallback" => $milestone->getMessage(),
-                "color"=>  "#36a64f",
+                "color"=>  $milestone->getIsOK() ? "#00FF00" : "#FF0000",
                 "text" => $milestone->getMessage(),
-                "footer"=>  $this->engine->getUsedLocation() . " | Catebory: " . $milestone->getCategory(),
+                "footer"=>  $this->engine->getUsedLocation() . " | Catebory: " . $milestone->getMilestoneId(),
             ];
         }
 
@@ -64,9 +51,8 @@ class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements 
         }
     }
 
-    public function startTracker($message, array $fields = [])
+    public function startTracker(string $milestoneId, $message, array $fields = [])
     {
-        $this->engine->warn("START SLACK TRACKER: " . $message);
         $return = $this->send($message, $fields);
         if(!$this->threadId && isset($return['ts'])) {
             $this->threadId = $return['ts'];
@@ -77,21 +63,20 @@ class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements 
         }
     }
 
-    public function endTracker($message, array $fields = [])
+    public function endTracker(string $milestoneId, $message, array $fields = [], bool $isOK = true)
     {
-        $this->engine->warn("END SLACK TRACKER: " . $message);
         $this->sendBatch();
-        $this->send($message, $fields);
+        $this->send($message, $fields, $isOK);
     }
     
-    public function send($message, $fields = [])
+    public function send($message, $fields = [], bool $isOK = true)
     {    
         $attachments = [];
 
         if(count($fields) > 0) {
             $attachments[] = [
                     "fallback" => $message,
-                    "color"=>  "#36a64f",
+                    "color"=>  $isOK ? "#00FF00" : "#FF0000",
                     "fields" =>  $fields,
                     "footer"=>  "Wobot",
             ];
@@ -119,6 +104,16 @@ class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements 
                 
             try {
                 $response = Http::withToken($this->slackToken)->post("https://slack.com/api/chat.postMessage", $payload);
+            
+                if(!$response->successful() || ! $response->json('ok')) {
+                    if($response->json('error')) {
+                        $this->engine->error("Slack: HTTP-". $response->status() . "] " . $response->json('error'));    
+                    }
+
+                    if($response->json('warning')) {
+                        $this->engine->warn("Slack: HTTP-". $response->status() . "] " . $response->json('warning'));    
+                    }
+                }
             } catch (\Exception $e) {
                 $this->engine->error($e->getMessage());
             }

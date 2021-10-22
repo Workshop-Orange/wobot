@@ -76,7 +76,7 @@ class DeploymentPostCommand extends Command
 
             $engine->setLogDirectory($logDir);
             $engine->loadTrackers($deploymentFile, $trackersKey);
-            $engine->startTrackMilestones("Starting post deployment");
+            $engine->startTrackMilestone($engine->getUsedLocation(), "Starting post deployment");
 
             $engine->loadSteps($deploymentFile, $stepsKey);
             
@@ -85,10 +85,12 @@ class DeploymentPostCommand extends Command
             
             if ($ret > 0) {
                 $engine->error("Step failed: " . $engine->getFailureClass() ." [" . $engine->getFailureCode() . "] " . $engine->getFailureMessage());
-                $engine->endTrackMilestones("Step failed: " . $engine->getFailureClass() ." [" . $engine->getFailureCode() . "] " . $engine->getFailureMessage(), $trackerFields);
+                $engine->endTrackMilestone($engine->getUsedLocation(), 
+                    "Step failed: " . $engine->getFailureClass() ." [" . $engine->getFailureCode() . "] " . $engine->getFailureMessage(), 
+                    $trackerFields);
             } else {
                 $engine->info("All steps completed successfully");
-                $engine->endTrackMilestones("All steps completed successfully", $trackerFields);
+                $engine->endTrackMilestone($engine->getUsedLocation(),"All steps completed successfully", $trackerFields);
             }
     
             if ($ret > 255) {
