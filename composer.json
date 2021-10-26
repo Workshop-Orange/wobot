@@ -23,6 +23,7 @@
         "illuminate/log": "^8.0",
         "illuminate/redis": "^8.0",
         "intonate/tinker-zero": "^1.2",
+        "league/flysystem-aws-s3-v3": "^1.0",
         "newrelic/monolog-enricher": "^2.0",
         "predis/predis": "^1.1",
         "symfony/process": "^5.2",
