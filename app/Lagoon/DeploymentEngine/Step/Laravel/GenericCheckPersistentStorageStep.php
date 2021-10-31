@@ -34,7 +34,8 @@ Class GenericCheckPersistentStorageStep extends StepBase implements StepInterfac
 
     public function execute(): int
     {
-        $this->info("Checking persistent storage");
+        $this->engine->trackMilestoneProgress(class_basename($this::class), 
+            "Checking persistent storage");
 
         $paths[] = $this->storage_path('framework/sessions');
         $paths[] = $this->storage_path('framework/views');
@@ -42,26 +43,28 @@ Class GenericCheckPersistentStorageStep extends StepBase implements StepInterfac
 
         foreach($paths as $path) {
             if(! File::isDirectory($path)) {
-                $this->error("Directory NOK: " . $path);
+                $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                    "Directory Not OK: " . $path, false);
+
                 $this->setFailure(255, "Could not find directory: " . $path);
                 return $this->getReturnCode();
             } else {
                 $testFile = $path . DIRECTORY_SEPARATOR . ".lagoon-prepare-test-file-" . uniqid();
                 touch($testFile);
                 if(! File::isWritable($testFile)) {
-                    $this->error("Directory NOK: " . $path);
+                    $this->engine->trackMilestoneProgress(class_basename($this::class), "Directory Not OK: " . $path, false);
                     $this->setFailure(255, "Could not create the file: " . $testFile);
                     return $this->getReturnCode();
                 }
 
                 File::delete($testFile);
                 if(File::exists($testFile)) {
-                    $this->error("Directory NOK: " . $path);
+                    $this->engine->trackMilestoneProgress(class_basename($this::class), "Directory Not OK: " . $path, false);
                     $this->setFailure(255, "Could not delete the test file: " . $testFile);
                     return $this->getReturnCode();
                 }
 
-                $this->info("Directory OK: " . $path);
+                $this->engine->trackMilestoneProgress(class_basename($this::class), "Directory OK: " . $path);
             }
 
         }

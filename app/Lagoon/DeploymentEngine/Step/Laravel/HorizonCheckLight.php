@@ -15,17 +15,19 @@ Class HorizonCheckLight extends StepBase implements StepInterface
     
     public function execute(): int
     {
-        $this->info("Laravel horizon check light starting");
+        $this->engine->trackMilestoneProgress(class_basename($this::class), "Laravel horizon check light starting");
         $semaphore = isset($this->config['semaphore']) ? $this->config['semaphore'] : null;
 
         if(! $semaphore) {
-            $this->warn("No semaphore specified for HorizonCheckLight");
+            $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                "No semaphore specified for HorizonCheckLight");
             $this->setFailure(254, "No semaphore specified for HorizonCheckLight");
             return $this->getReturnCode();
         }
 
         if(! File::exists($semaphore)) {
-            $this->warn("Semaphore file does not yet exist.");
+            $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                "Semaphore file does not yet exist.");
             $this->setFailure(254, "Semaphore file does not yet exist.");
             return $this->getReturnCode();
         }
@@ -33,11 +35,13 @@ Class HorizonCheckLight extends StepBase implements StepInterface
         $light = File::get($semaphore);
         switch($light) {
             case "block":
-                $this->warn("Horizon is in block-no-go state");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                    "Horizon is in block-no-go state");
                 $this->setFailure(255, "Horizon is in block-no-go state");
                 return $this->getReturnCode();
             case "proceed":
-                $this->info("Horizon is in proceed state");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                    "Horizon is in proceed state");
                 return 0;
             default:
                 $this->setFailure(254, "Horizon is in an unknown state.");

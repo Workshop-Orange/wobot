@@ -17,7 +17,8 @@ Class GenericPrepareDatabaseMigrateStep extends StepBase implements StepInterfac
     
     public function execute(): int
     {
-        $this->info("Preparing database migrations");
+        $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                    "Preparing database migrations");
         $this->overrideDatabaseConfig();
 
         $callingCommand = $this->engine->getCallingCommand();
@@ -28,17 +29,25 @@ Class GenericPrepareDatabaseMigrateStep extends StepBase implements StepInterfac
 
         try {
             if(env('LAGOON_ENVIRONMENT_TYPE') == "production") {
-                $this->warn("I won't perform migrations in production");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                    "Not performing migrations in a production environment");
                 return $this->getReturnCode();
             }
 
             $migrateRet = $this->engine->runLaravelArtisanCommand(["migrate"]);
             if($migrateRet > 0) {
                 $this->setFailure($migrateRet, "Error migrating database");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                    "Error migrating database", false);
                 return $this->getReturnCode();
             }
+
+            $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                "Migration step completed");
         } catch (\Exception $ex) {
             $this->setFailure($ex->getCode(), $ex->getMessage());
+            $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                $this->getFailureMessage(), false);
             return $this->getReturnCode();
         }
 

@@ -15,10 +15,11 @@ abstract Class SyncBaseStep extends StepBase implements StepInterface
     
     public function executeSync($syncStyle = ""): int
     {
-        $this->info("Laravel sync {$syncStyle} steps starting");
+        $this->engine->trackMilestoneProgress(class_basename($this::class) . "-" . $syncStyle,
+            "Laravel sync {$syncStyle} steps starting");
+
         if(!isset($this->config['sourceenv'])) {
             $this->setFailure(255, "sourceenv is required for environment sync");
-            $this->error($this->getFailureMessage());
             return $this->getReturnCode();   
         }
 
@@ -27,7 +28,6 @@ abstract Class SyncBaseStep extends StepBase implements StepInterface
             $lagoonSyncSourceVar = isset($this->config['sourceenvvar']) ? $this->config['sourceenvvar'] : '';
             if(! $lagoonSyncSourceVar) {
                 $this->setFailure(255,"sourceenvvar is required for environment sync where sourceenv is a regex");
-                $this->error($this->getFailureMessage());
                 return $this->getReturnCode();   
             }
 
@@ -49,8 +49,9 @@ abstract Class SyncBaseStep extends StepBase implements StepInterface
         $lagoonSyncServiceName = $this->engine->getService();
         $lagoonSyncTimeout = isset($this->config['timeout']) ? $this->config['timeout'] : 60 * 5;
 
-        $this->info("[Sync {$syncStyle}] Source environment is [{$lagoonSyncSource}] and service is [{$lagoonSyncServiceName}]");
-
+        $this->engine->trackMilestoneProgress(class_basename($this::class) . "-" . $syncStyle, 
+            "[Sync {$syncStyle} in progress] Source environment is [{$lagoonSyncSource}] and service is [{$lagoonSyncServiceName}]");
+        
         $cmd = [
             $lagoonSyncCmd,
             "--config",
@@ -67,12 +68,14 @@ abstract Class SyncBaseStep extends StepBase implements StepInterface
         try {
             $ret = $this->engine->runCommand($cmd, null, $lagoonSyncTimeout);
             if($ret > 0) {
-                $this->setFailure($ret, "Error syncing database");
+                $this->setFailure($ret, "Error syncing " . $syncStyle);
                 return $this->getReturnCode();
             }
+
+            $this->engine->trackMilestoneProgress(class_basename($this::class) . "-" . $syncStyle, 
+                "[Sync {$syncStyle} complete] Source environment is [{$lagoonSyncSource}] and service is [{$lagoonSyncServiceName}]");
         } catch (\Exception $ex) {
             $this->setFailure($ex->getCode() ? $ex->getCode() : 255, $ex->getMessage());
-            $this->error($this->getFailureMessage());
             return $this->getReturnCode();
         }
 

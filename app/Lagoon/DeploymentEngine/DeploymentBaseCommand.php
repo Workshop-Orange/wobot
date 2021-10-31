@@ -2,6 +2,7 @@
 
 namespace App\Lagoon\DeploymentEngine;
 
+use Dotenv\Dotenv;
 use Exception;
 use LaravelZero\Framework\Commands\Command;
 
@@ -20,6 +21,7 @@ abstract class DeploymentBaseCommand extends Command
         $stepsKey = $this->option("steps-key");
         $trackersKey = $this->option("trackers-key");
         $logDir = $this->option("log-dir");
+        $project = $this->option("this-project") ? $this->option("this-project") : env('LAGOON_PROJECT');
         $environment = $this->option("this-environment") ? $this->option("this-environment") : env('LAGOON_ENVIRONMENT');
         $service = $this->option("this-service") ? $this->option("this-service") : env('SERVICE_NAME');
         $prbase = $this->option("this-prbase") ? $this->option("this-prbase") : env('LAGOON_PR_BASE_BRANCH');
@@ -27,8 +29,9 @@ abstract class DeploymentBaseCommand extends Command
         $engine = app('LagoonDeploymentEngine');
         $engine->setUsedLocation($usedLocation);
         $engine->setCallingCommand($this);
-        $engine->setService($service);
+        $engine->setProject($project);
         $engine->setEnvironment($environment);
+        $engine->setService($service);
         $engine->setPRBase($prbase);
 
         try {
@@ -65,7 +68,7 @@ abstract class DeploymentBaseCommand extends Command
                 $engine->error("Step failed: " . $engine->getFailureClass() ." [" . $engine->getFailureCode() . "] " . $engine->getFailureMessage());
                 $engine->endTrackMilestone($engine->getUsedLocation(), 
                     "Step failed: " . $engine->getFailureClass() ." [" . $engine->getFailureCode() . "] " . $engine->getFailureMessage(),  
-                    $trackerFields);
+                    $trackerFields, false);
             } else {
                 $engine->info("All steps completed successfully");
                 $engine->endTrackMilestone($engine->getUsedLocation(), "All steps completed successfully", $trackerFields);

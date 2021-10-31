@@ -15,6 +15,15 @@ $app = new App\Application(
     dirname(__DIR__)
 );
 
+
+if(file_exists(getcwd() . DIRECTORY_SEPARATOR . ".env")) {
+    echo "Environment local is loaded from: " . getcwd() . DIRECTORY_SEPARATOR . ".env" . "\n";
+    $app->instance('path.env', getcwd());
+    $app->useEnvironmentPath(getcwd());
+} else {
+    echo "No local environment detected\n";
+}
+
 /*
 |--------------------------------------------------------------------------
 | Bind Important Interfaces
@@ -35,6 +44,7 @@ $app->singleton(
     Illuminate\Contracts\Debug\ExceptionHandler::class,
     Illuminate\Foundation\Exceptions\Handler::class
 );
+
 
 /*
 |--------------------------------------------------------------------------

@@ -9,11 +9,16 @@ trait OverrideDatabaseConfigTrait
     public function overrideDatabaseConfig()
     {
         if(isset($this->config['database-config-file']) && File::exists($this->config['database-config-file'])) {
-            $this->info('Using provided DB config: ' . $this->config['database-config-file']);
+            
+            $this->engine->trackMilestoneProgress(class_basename($this::class),
+                'Using provided DB config: ' . $this->config['database-config-file']);
+            
             $dbConfig = include($this->config['database-config-file']);
+            
             config(['database' => $dbConfig]);
         } else {
-            $this->info('Using default DB config');
+            $this->engine->trackMilestoneProgress(class_basename($this::class),
+                'Using default DB config');
         }
     }
 }

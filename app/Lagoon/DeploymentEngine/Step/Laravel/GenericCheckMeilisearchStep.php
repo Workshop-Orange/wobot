@@ -18,18 +18,22 @@ Class GenericCheckMeilisearchStep extends StepBase implements StepInterface
     public function getScoutConfig()
     {
         if(isset($this->config['scout-config-file']) && File::exists($this->config['scout-config-file'])) {
-            $this->info('Using provided Scout config: ' . $this->config['scout-config-file']);
+            $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                'Using provided Scout config: ' . $this->config['scout-config-file']);
+
             $scoutConfig = include($this->config['scout-config-file']);
             return $scoutConfig;
         } else {
-            $this->info('Using default Scout config');
+            $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                'Using default Scout config');
+
             return config('scout');
         }
     }
 
     public function execute(): int
     {
-        $this->info("Performing meilisearch check");
+        $this->engine->trackMilestoneProgress(class_basename($this::class), "Performing meilisearch check");
 
         $scoutConfig= $this->getScoutConfig();
         $driver = Arr::get($scoutConfig, "driver");
@@ -38,17 +42,18 @@ Class GenericCheckMeilisearchStep extends StepBase implements StepInterface
         $stats = $host . "/stats";
 
         if($driver != "meilisearch" || !$host) {
-            $this->warn("Scout is not configured, or meilisearch is not used. [Driver={$driver}] [Host={$host}]");
+            $this->engine->trackMilestoneProgress(class_basename($this::class), "Skipping: Scout is not configured, or meilisearch is not used. [Driver={$driver}] [Host={$host}]");
             return $this->getReturnCode();
         }
 
-        $this->info("Scout is configured and meilisearch is used. [Driver={$driver}] [Host={$host}]");
+        $this->engine->trackMilestoneProgress(class_basename($this::class), "Scout is configured and meilisearch is used. [Driver={$driver}] [Host={$host}]");
 
         try {
 
             $headers = [];
             if($key) {
-                $this->info("Found an API key");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                    "Found an API key");
                 $headers['X-Meili-API-Key'] = $key;
             }
 
@@ -59,7 +64,7 @@ Class GenericCheckMeilisearchStep extends StepBase implements StepInterface
                 
                 return $this->getReturnCode();
             } else {
-                $this->info("Meilisearch returned expected data.");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), "Success: Meilisearch returned expected data.");
             }
         } catch(\Exception $ex) {
             $this->setFailure(255, $ex->getMessage());

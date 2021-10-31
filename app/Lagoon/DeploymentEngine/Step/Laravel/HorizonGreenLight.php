@@ -17,19 +17,22 @@ Class HorizonGreenLight extends StepBase implements StepInterface
     
     public function execute(): int
     {
-        $this->info("Setting laravel horizon green light");
+        $this->engine->trackMilestoneProgress(class_basename($this::class), 
+            "Setting laravel horizon green light");
         $semaphore = isset($this->config['semaphore']) ? $this->config['semaphore'] : null;
         
         touch($semaphore);
 
         if(! File::exists($semaphore)) {
-            $this->warn("Semaphore file was not created");
+            $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                "Semaphore file was not created");
             $this->setFailure(254, "Semaphore file was not created");
             return $this->getReturnCode();
         }
 
         if(! File::isWritable($semaphore)) {
-            $this->warn("Semaphore file is not writeable");
+            $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                "Semaphore file is not writeable");
             $this->setFailure(254, "Semaphore file is not writeable");
             return $this->getReturnCode();
         }

@@ -20,17 +20,30 @@ abstract class DeploymentEngineBase extends EngineBase implements DeploymentEngi
     protected $logFile;
     protected $usedLocation;
     protected $logDirectory;
+    protected $project;
     protected $environment;
     protected $service;
     protected $prbase;
 
-    public function __construct($usedLocation = "deploy", $logDirectory = "./", $environment="", $service="", $prbase = "")
+    public function __construct($usedLocation = "deploy", $logDirectory = "./", $project = "", $environment="", $service="", $prbase = "")
     {
         parent::__construct($usedLocation, $logDirectory);
         $this->deploymentSteps = collect([]);
+        $this->project = $project;
         $this->environment = $environment;
         $this->service = $service;
         $this->prbase = $prbase;
+    }
+
+    public function setProject($project) 
+    {
+        $this->project = $project;
+        return $this;
+    }
+
+    public function getProject()
+    {
+        return $this->project;
     }
 
     public function setPRBase($prbase) 

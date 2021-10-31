@@ -3,6 +3,9 @@
 namespace App\Lagoon\DeploymentEngine\Step\Gatsby;
 
 use App\Lagoon\DeploymentEngine\Step\StepInterface;
+use Exception;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\File;
 
 Class StoreIncrementalBuildAssetsToS3Step extends IncrementalBuildAssetsS3BaseStep implements StepInterface
 {
@@ -13,19 +16,56 @@ Class StoreIncrementalBuildAssetsToS3Step extends IncrementalBuildAssetsS3BaseSt
     
     public function execute(): int
     {
-        $this->info("Storing incremental build assetes to S3: " . $this->engine->getUsedLocation());
-        print_r($this->config);
+        if(empty($this->engine->getProject()) || empty($this->engine->getEnvironment())) {
+            $this->setFailure(255, "Both the Project and the Environment need to be set in the engine for Gatsby build caching to work");
+            return $this->getReturnCode();
+        }
 
-        $disk = $this->getS3Disk();
+        $this->info("Storing incremental build assetes to S3 [" . $this->engine->getUsedLocation() . "]");
 
-        $disk->put("/bryan.txt","hello world");
+        try {
+            $disk = $this->getS3Disk();
+            if(!$disk) {
+                $this->setFailure($this->getReturnCode() ? $this->getReturnCode() : 255, $this->getFailureMessage() ? $this->getFailureMessage() : "S3 Disk not retrieved.");
+                return $this->getReturnCode();
+            }
 
-        if($disk->exists("/bryan.txt")) {
-            $this->info("Build context uploaded to S3 bucket");
-            return 0;
-        } else {            
-            $this->setFailure(255, "Error uploading the build context to S3 bucket");
-            $this->error($this->getFailureMessage());
+            $cacheArchiveFileName = empty($this->config['cachearchivename']) ? "gatsby_bulid_cache.tgz" : $this->config['cachearchivename'];    
+            $this->info("Storing incremental build cache assets to S3 [" . $this->engine->getUsedLocation() . "] " . $this->getBuildAssetsS3Path($cacheArchiveFileName));
+
+            $tempFileCache = tempnam(sys_get_temp_dir(), Str::slug($this->engine->getProject()) . "_" . Str::slug($this->engine->getEnvironment()) . "_" . $cacheArchiveFileName );
+            $this->info("Temporary cache file: [" . $this->engine->getUsedLocation() . "] " . $tempFileCache);
+
+            $ret = $this->engine->runCommand(array_merge([
+                '/usr/bin/tar',
+                '-zcf',
+                $tempFileCache,           
+                ], is_array($this->config['cachedirs']) ? $this->config['cachedirs'] : ['/app/.cache', '/app/public']), 
+                null,
+                isset($this->config['timeout']) ? $this->config['cachedirs'] : 1200
+            );
+
+            if($ret > 0) {
+                $this->setFailure($ret, "Error creating the cache archive file");
+                return $this->getReturnCode();
+            } 
+
+            $fhandle = fopen($tempFileCache, "r");
+
+            $uploaded = $disk->put($this->getBuildAssetsS3Path($cacheArchiveFileName),$fhandle);
+            $sizeMatches = $disk->size($this->getBuildAssetsS3Path($cacheArchiveFileName)) == File::size($tempFileCache);
+            $uploadExists = $disk->exists($this->getBuildAssetsS3Path($cacheArchiveFileName));
+
+            if($uploaded && $sizeMatches && $uploadExists) {
+                $this->info("Build context uploaded to S3 bucket");
+                return 0;
+            } else {            
+                $this->setFailure(255, "Error uploading the build context to S3 bucket");
+                $this->error($this->getFailureMessage());
+                return $this->getReturnCode();
+            }
+        } catch (Exception $ex) {
+            $this->setFailure(255, $ex->getMessage());
             return $this->getReturnCode();
         }
 

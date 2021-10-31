@@ -17,6 +17,7 @@ class BuildGatsbyPreCommand extends DeploymentBaseCommand
         {--steps-key=build.gatsby.pre : Specify the dot notation key of build steps to use}
         {--trackers-key=deployment.trackers : Specify the dot notation key of tracker configuration to use}
         {--log-dir=./ : Specify the directory to store the logfile}
+        {--this-project= : Specify what project this is}
         {--this-environment= : Specify what environment this is}
         {--this-service= : Specify what service this is}
         {--this-prbase= : Specify what prbase this is}

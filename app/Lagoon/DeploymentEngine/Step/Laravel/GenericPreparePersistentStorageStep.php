@@ -34,7 +34,9 @@ Class GenericPreparePersistentStorageStep extends StepBase implements StepInterf
 
     public function execute(): int
     {
-        $this->info("Preparing persistent storage");
+        $this->engine->trackMilestoneProgress(class_basename($this::class), 
+            "Preparing persistent storage");
+
 
         $paths[] = $this->storage_path('framework/sessions');
         $paths[] = $this->storage_path('framework/views');
@@ -43,14 +45,19 @@ Class GenericPreparePersistentStorageStep extends StepBase implements StepInterf
         foreach($paths as $path) {
             File::ensureDirectoryExists($path, 0755, true);
             if(! File::isDirectory($path)) {
-                $this->error("Directory not prepared: " . $path);
+                $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                    "Directory not prepared: " . $path, false);
                 $this->setFailure(255, "Could not create directory: " . $path);
                 return $this->getReturnCode();
             } else {
-                $this->info("Directory prepared: " . $path);
+                $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                    "Directory prepared: " . $path);
             }
         }
 
+        $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                    "All directories prepared");
+                    
         return $this->getReturnCode();
     }
 }

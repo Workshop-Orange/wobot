@@ -38,7 +38,7 @@ return [
         'newrelic' => [
             'driver' => 'custom',
             'via' => App\Lagoon\NewRelicLogger::class,
-	    'NEWRELIC_LICENSE' => env('NEWRELIC_LICENSE',''),
+	        'NEWRELIC_LICENSE' => env('NEWRELIC_LICENSE',''),
             'service' => env('SERVICE_NAME', env('LAGOON', 'unconfigured')),
             'env' => [
 	        'APP_NAME' => env('APP_NAME', 'unconfigured'),
@@ -63,7 +63,11 @@ return [
             'path' => storage_path('logs/laravel.log'),
             'level' => 'debug',
         ],
-
+        'wobot-applog' => [
+            'driver' => 'single',
+            'path' => '/app/storage/logs/wobot.log',
+            'level' => 'debug',
+        ],
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),

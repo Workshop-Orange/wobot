@@ -9,8 +9,9 @@ class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements 
 {
     protected $slackToken;
     protected $slackChannel;
-    protected $maxBatch = 2;
+    protected $maxBatch = 1;
     protected $milestoneBatcher;
+    protected $startFields;
 
     public function configure(array $config)
     {
@@ -41,7 +42,7 @@ class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements 
                 "fallback" => $milestone->getMessage(),
                 "color"=>  $milestone->getIsOK() ? "#00FF00" : "#FF0000",
                 "text" => $milestone->getMessage(),
-                "footer"=>  $this->engine->getUsedLocation() . " | Catebory: " . $milestone->getMilestoneId(),
+                "footer"=>  $this->engine->getUsedLocation() . " | Category: " . $milestone->getMilestoneId(),
             ];
         }
 
@@ -53,13 +54,56 @@ class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements 
 
     public function startTracker(string $milestoneId, $message, array $fields = [])
     {
+        $this->startFields = $fields;
+        if(!$this->threadId) {
+            $return = $this->send("Deployment: " . $this->engine->getUsedLocation(), $fields);
+            if(isset($return['ts'])) {
+                $this->threadId = $return['ts'];
+                if($this->deploymentthreadFile) {
+                    $this->engine->info("Stored thread id for future messages: " . $this->deploymentthreadFile);
+                    File::put($this->deploymentthreadFile, $this->threadId);
+                }
+            }    
+        } else {
+            $this->updateMainThread("Deployment: " . $this->engine->getUsedLocation(), true);
+        }
+
         $return = $this->send($message, $fields);
-        if(!$this->threadId && isset($return['ts'])) {
-            $this->threadId = $return['ts'];
-            if($this->deploymentthreadFile) {
-                $this->engine->info("Stored thread id for future messages: " . $this->deploymentthreadFile);
-                File::put($this->deploymentthreadFile, $this->threadId);
+    }
+
+    public function updateMainThread($message, bool $isOK)
+    {
+        $payload = [
+            'channel'    => $this->slackChannel,
+            'text'       => $message,
+            'username'   => "Wobot",
+            'icon_emoji' => ":robot_face:",
+            'ts' => $this->threadId
+        ];
+        
+        $attachments[] = [
+            "fallback" => $message,
+            "color"=>  $isOK ? "#00FF00" : "#FF0000",
+            "fields" =>  $this->startFields,
+            "footer"=>  $this->engine->getUsedLocation(),
+        ];
+
+        $payload['attachments'] = $attachments;
+
+        try {
+            $response = Http::withToken($this->slackToken)->post("https://slack.com/api/chat.update", $payload);
+        
+            if(!$response->successful() || ! $response->json('ok')) {
+                if($response->json('error')) {
+                    $this->engine->error("Slack: HTTP-". $response->status() . "] " . $response->json('error'));    
+                }
+
+                if($response->json('warning')) {
+                    $this->engine->warn("Slack: HTTP-". $response->status() . "] " . $response->json('warning'));    
+                }
             }
+        } catch (\Exception $e) {
+            $this->engine->error($e->getMessage());
         }
     }
 
@@ -67,6 +111,10 @@ class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements 
     {
         $this->sendBatch();
         $this->send($message, $fields, $isOK);
+
+        if($this->threadId) {
+            $this->updateMainThread("Deployment: " . $this->engine->getUsedLocation() . " " . ($isOK ? "passed" : "failed"), $isOK);
+        }
     }
     
     public function send($message, $fields = [], bool $isOK = true)
@@ -78,7 +126,7 @@ class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements 
                     "fallback" => $message,
                     "color"=>  $isOK ? "#00FF00" : "#FF0000",
                     "fields" =>  $fields,
-                    "footer"=>  "Wobot",
+                    "footer"=>  $this->engine->getUsedLocation(),
             ];
         }
                    

@@ -19,18 +19,19 @@ Class GenericPrepareDatabaseSeedStep extends StepBase implements StepInterface
     
     public function execute(): int
     {
-        if(! env('LAGOON_PR_NUMBER') && env('LAGOON_GIT_BRANCH') != "dev")
-        {
-            $this->info("We're not on a PR branch or on a dev branch. Assuming no DB seeding at this time.");
-            return $this->getReturnCode();
-        }
+        $this->setFailure(255, "The seeder logic needs to be rewritten. Don't use this.");
+        $this->engine->trackMilestoneProgress(class_basename($this::class), 
+            "ERROR: The seeder logic needs to be rewritten.", false);
+
+        return $this->getReturnCode();
 
         if(env('LAGOON_ENVIRONMENT_TYPE') == "production") {
-            $this->warn("I won't perform seeding in production");
+            $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                "Not performing seeding in a production environment");
+
             return $this->getReturnCode();
         }
 
-        $this->info("Checking database seeding");
         $this->overrideDatabaseConfig();
         DB::reconnect();
 
@@ -43,17 +44,22 @@ Class GenericPrepareDatabaseSeedStep extends StepBase implements StepInterface
         try {
             if(!Schema::hasTable("migrations")) {
                 $this->setFailure(255, "migration table is missing, suggesting migrations did not run.");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                    "migration table is missing, suggesting migrations did not run", false);
                 return $this->getReturnCode();
             } else {
-                $this->info("Migrations table found");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                    "migration table found");
             }
 
             $result = DB::table("migrations")->count();
             if($result <= 0) {
                 $this->setFailure(255, "migration table exists but has no contents, suggesting migrations failed.");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), $this->getFailureMessage(), false);
                 return $this->getReturnCode();            
             } else {
-                $this->info("Migrations table has entries");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                    "Migrations table has entries");
             }
 
         } catch (\Exception $ex) {
@@ -62,40 +68,23 @@ Class GenericPrepareDatabaseSeedStep extends StepBase implements StepInterface
         }
 
         try {
-            $runSeeder = false;
-
-            $result = DB::table("users")->count();
-
-            if($result > 0 && empty(env('LAGOON_PR_NUMBER'))) {
-                $this->warn("There are users in the database, and we aren't on a PR. Assuming we don't want to reseed.");
-                $runSeeder = false;
+            $migrateFreshRet = $this->engine->runLaravelArtisanCommand(["migrate:fresh"]);
+            if($migrateFreshRet > 0) {
+                $this->setFailure($migrateFreshRet, "Error running migrate:fresh");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), $this->getFailureMessage(), false);
                 return $this->getReturnCode();
-            } else if($result > 0 && !empty(env('LAGOON_PR_NUMBER'))) {
-                $this->warn("There are users in the database, and we are on a PR. Reseeding.");
-                $runSeeder = true;
             } else {
-                $runSeeder = true;
+                $this->engine->trackMilestoneProgress(class_basename($this::class), "migrate:fresh success");
+            }
+
+            $migrateSeedRet = $this->engine->runLaravelArtisanCommand(["db:seed"]);
+            if($migrateSeedRet > 0) {
+                $this->setFailure($migrateSeedRet, "Error running db:seed");
+                return $this->getReturnCode();
+            } else {
+                $this->engine->trackMilestoneProgress(class_basename($this::class), "db:seed success");
             }
             
-            if($runSeeder) {
-                $migrateFreshRet = $this->engine->runLaravelArtisanCommand(["migrate:fresh"]);
-                if($migrateFreshRet > 0) {
-                    $this->setFailure($migrateFreshRet, "Error running migrate:fresh");
-                    return $this->getReturnCode();
-                } else {
-                    $this->info("migrate:fresh status returns 0 exit status");
-                }
-
-                $migrateSeedRet = $this->engine->runLaravelArtisanCommand(["db:seed"]);
-                if($migrateSeedRet > 0) {
-                    $this->setFailure($migrateSeedRet, "Error running db:seed");
-                    return $this->getReturnCode();
-                } else {
-                    $this->info("db:seed status returns 0 exit status");
-                }
-            } else {
-                $this->warn("Seems like we will not run the seeder");
-            }
         } catch (\Exception $ex) {
             $this->setFailure($ex->getCode(), $ex->getMessage());
             return $this->getReturnCode();

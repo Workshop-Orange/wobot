@@ -20,7 +20,8 @@ Class GenericCheckDatabaseStep extends StepBase implements StepInterface
     
     public function execute(): int
     {
-        $this->info("Checking database");
+        $this->engine->trackMilestoneProgress(class_basename($this::class), 
+            "Checking database");
 
         $this->overrideDatabaseConfig();
         DB::reconnect();
@@ -34,7 +35,7 @@ Class GenericCheckDatabaseStep extends StepBase implements StepInterface
         try {
             
             if(env('LAGOON_ENVIRONMENT_TYPE') == "production") {
-                $this->warn("Not performing deep database checks in production");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), "Not performing deep database checks in production");
                 return $this->getReturnCode();
             }
 
@@ -42,7 +43,7 @@ Class GenericCheckDatabaseStep extends StepBase implements StepInterface
                 $this->setFailure(254, "migration table is missing, suggesting migrations did not run.");
                 return $this->getReturnCode();
             } else {
-                $this->info("Migrations table found");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), "Migrations table found");
             }
 
             $result = DB::table("migrations")->count();
@@ -50,7 +51,7 @@ Class GenericCheckDatabaseStep extends StepBase implements StepInterface
                 $this->setFailure(253, "migration table exists but has no contents, suggesting migrations failed.");
                 return $this->getReturnCode();            
             } else {
-                $this->info("Migrations table has entries");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), "Migrations table has entries");
             }
 
         } catch (\Exception $ex) {
@@ -64,7 +65,7 @@ Class GenericCheckDatabaseStep extends StepBase implements StepInterface
                 $this->setFailure($migrateRet, "Error checking migration status");
                 return $this->getReturnCode();
             } else {
-                $this->info("Migrations status returns 0 exit status");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), "Migrations status returns good exit status");
             } 
         } catch (\Exception $ex) {
             $this->setFailure($ex->getCode(), "ERR:" . $ex->getMessage());
