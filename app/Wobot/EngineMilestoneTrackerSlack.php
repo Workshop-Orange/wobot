@@ -4,6 +4,7 @@ namespace App\Wobot;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements EngineMilestoneTrackerInterface
 {
@@ -19,7 +20,7 @@ class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements 
         
         $this->maxBatch = $this->config->get('maxbatch') ? $this->config->get('maxbatch') : 10;
         $this->slackToken = $this->config->get('tokenvar') ? env($this->config->get('tokenvar'),'') : '' ;
-        $this->slackChannel = $this->config->get('channel');
+        $this->slackChannel = $this->config->get('channel') ? $this->config->get('channel') : ($this->config->get('channelvar') ? env($this->config->get('channelvar'),'') : '');
         $this->engine->info("Slack token: " . $this->slackToken);
         $this->engine->info("Slack channel: " . $this->slackChannel);
         $this->milestoneBatcher = collect([]);
@@ -55,6 +56,8 @@ class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements 
 
     public function startTracker(string $milestoneId, $message, array $fields = [])
     {
+        $redactedToken = preg_replace("/(\w|\d)/", "*", $this->slackToken);
+        $this->engine->info("Starting slack tracker: [token: ${$redactedToken}] [chan: {$this->slackChannel}] [thread: {$this->threadId}] [maxbatch: {$this->maxBatch}]");
         $this->startFields = $fields;
         if(!$this->threadId) {
             $return = $this->send("Deployment: " . $this->engine->getUsedLocation(), $fields);
