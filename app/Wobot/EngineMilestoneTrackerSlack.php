@@ -21,8 +21,12 @@ class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements 
         $this->maxBatch = $this->config->get('maxbatch') ? $this->config->get('maxbatch') : 10;
         $this->slackToken = $this->config->get('tokenvar') ? env($this->config->get('tokenvar'),'') : '' ;
         $this->slackChannel = $this->config->get('channel') ? $this->config->get('channel') : ($this->config->get('channelvar') ? env($this->config->get('channelvar'),'') : '');
-        $this->engine->info("Slack token: " . $this->slackToken);
+        
+        $redactedToken = preg_replace("/(\w|\d)/", "x", $this->slackToken);
+        $this->engine->info("Slack token: " . $redactedToken);
+        
         $this->engine->info("Slack channel: " . $this->slackChannel);
+        
         $this->milestoneBatcher = collect([]);
     }
 
