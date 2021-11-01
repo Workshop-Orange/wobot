@@ -64,7 +64,7 @@ class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements 
         $this->engine->info("Starting slack tracker: [token: {$redactedToken}] [chan: {$this->slackChannel}] [thread: {$this->threadId}] [maxbatch: {$this->maxBatch}]");
         $this->startFields = $fields;
         if(!$this->threadId) {
-            $return = $this->send("Deployment: " . $this->engine->getUsedLocation(), $fields);
+            $return = $this->send("Deployment: " . $this->engine->getUsedLocation() . " :rocket:", $fields);
             if(isset($return['ts'])) {
                 $this->threadId = $return['ts'];
                 if($this->deploymentthreadFile) {
@@ -121,7 +121,7 @@ class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements 
         $this->send($message, $fields, $isOK);
 
         if($this->threadId) {
-            $this->updateMainThread("Deployment: " . $this->engine->getUsedLocation() . " " . ($isOK ? "passed" : "failed"), $isOK);
+            $this->updateMainThread("Deployment: " . $this->engine->getUsedLocation() . " " . ($isOK ? "passed :white_check_mark:" : "failed :bangbang:"), $isOK);
         }
     }
     
