@@ -9,7 +9,7 @@ class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements 
 {
     protected $slackToken;
     protected $slackChannel;
-    protected $maxBatch = 1;
+    protected $maxBatch = 10;
     protected $milestoneBatcher;
     protected $startFields;
 
@@ -17,6 +17,7 @@ class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements 
     {
         parent::configure($config);
         
+        $this->maxBatch = $this->config->get('maxbatch') ? $this->config->get('maxbatch') : 10;
         $this->slackToken = $this->config->get('tokenvar') ? env($this->config->get('tokenvar'),'') : '' ;
         $this->slackChannel = $this->config->get('channel');
         $this->engine->info("Slack token: " . $this->slackToken);
