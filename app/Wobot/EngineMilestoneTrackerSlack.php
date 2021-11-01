@@ -57,7 +57,7 @@ class EngineMilestoneTrackerSlack extends EngineMilestoneTrackerBase implements 
     public function startTracker(string $milestoneId, $message, array $fields = [])
     {
         $redactedToken = preg_replace("/(\w|\d)/", "*", $this->slackToken);
-        $this->engine->info("Starting slack tracker: [token: ${$redactedToken}] [chan: {$this->slackChannel}] [thread: {$this->threadId}] [maxbatch: {$this->maxBatch}]");
+        $this->engine->info("Starting slack tracker: [token: {$redactedToken}] [chan: {$this->slackChannel}] [thread: {$this->threadId}] [maxbatch: {$this->maxBatch}]");
         $this->startFields = $fields;
         if(!$this->threadId) {
             $return = $this->send("Deployment: " . $this->engine->getUsedLocation(), $fields);
