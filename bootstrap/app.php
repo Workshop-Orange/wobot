@@ -15,7 +15,6 @@ $app = new App\Application(
     dirname(__DIR__)
 );
 
-
 if(file_exists(getcwd() . DIRECTORY_SEPARATOR . ".env")) {
     # echo "Environment local is loaded from: " . getcwd() . DIRECTORY_SEPARATOR . ".env" . "\n";
     $app->instance('path.env', getcwd());

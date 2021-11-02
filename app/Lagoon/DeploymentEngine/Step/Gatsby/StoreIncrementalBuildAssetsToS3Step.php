@@ -21,8 +21,6 @@ Class StoreIncrementalBuildAssetsToS3Step extends IncrementalBuildAssetsS3BaseSt
             return $this->getReturnCode();
         }
 
-        $this->info("Storing incremental build assetes to S3 [" . $this->engine->getUsedLocation() . "]");
-
         try {
             $disk = $this->getS3Disk();
             if(!$disk) {
@@ -31,10 +29,12 @@ Class StoreIncrementalBuildAssetsToS3Step extends IncrementalBuildAssetsS3BaseSt
             }
 
             $cacheArchiveFileName = empty($this->config['cachearchivename']) ? "gatsby_bulid_cache.tgz" : $this->config['cachearchivename'];    
-            $this->info("Storing incremental build cache assets to S3 [" . $this->engine->getUsedLocation() . "] " . $this->getBuildAssetsS3Path($cacheArchiveFileName));
+            $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                "Storing incremental build cache assets to S3 [" . $this->engine->getUsedLocation() . "] " . $this->getBuildAssetsS3Path($cacheArchiveFileName));
 
             $tempFileCache = tempnam(sys_get_temp_dir(), Str::slug($this->engine->getProject()) . "_" . Str::slug($this->engine->getEnvironment()) . "_" . $cacheArchiveFileName );
-            $this->info("Temporary cache file: [" . $this->engine->getUsedLocation() . "] " . $tempFileCache);
+            $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                "Temporary cache file: [" . $this->engine->getUsedLocation() . "] " . $tempFileCache);
 
             $ret = $this->engine->runCommand(array_merge([
                 '/usr/bin/tar',
@@ -57,7 +57,9 @@ Class StoreIncrementalBuildAssetsToS3Step extends IncrementalBuildAssetsS3BaseSt
             $uploadExists = $disk->exists($this->getBuildAssetsS3Path($cacheArchiveFileName));
 
             if($uploaded && $sizeMatches && $uploadExists) {
-                $this->info("Build context uploaded to S3 bucket");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                    "Build context uploaded to S3 bucket");
+
                 return 0;
             } else {            
                 $this->setFailure(255, "Error uploading the build context to S3 bucket");

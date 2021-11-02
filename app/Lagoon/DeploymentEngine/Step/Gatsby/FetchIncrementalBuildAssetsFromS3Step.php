@@ -20,8 +20,6 @@ Class FetchIncrementalBuildAssetsFromS3Step extends IncrementalBuildAssetsS3Base
             return $this->getReturnCode();
         }
 
-        $this->info("Fetching incremental build assetes from S3: " . $this->engine->getUsedLocation());
-
         try {
             $disk = $this->getS3Disk();
             if(!$disk) {
@@ -30,22 +28,28 @@ Class FetchIncrementalBuildAssetsFromS3Step extends IncrementalBuildAssetsS3Base
             }
 
             $cacheArchiveFileName = empty($this->config['cachearchivename']) ? "gatsby_bulid_cache.tgz" : $this->config['cachearchivename'];    
-            $this->info("Fetching incremental build cache assets from S3 [" . $this->engine->getUsedLocation() . "] " . $this->getBuildAssetsS3Path($cacheArchiveFileName));
+            $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                "Fetching incremental build cache assets from S3 [" . $this->engine->getUsedLocation() . "] " . $this->getBuildAssetsS3Path($cacheArchiveFileName));
 
             if(!$disk->exists($this->getBuildAssetsS3Path($cacheArchiveFileName))) {
-                $this->warn("The cache file does not yet exist");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                    "The cache file does not yet exist");
                 return 0;
             }
 
             $tempFileCache = tempnam(sys_get_temp_dir(), Str::slug($this->engine->getProject()) . "_" . Str::slug($this->engine->getEnvironment()) . "_" . $cacheArchiveFileName );
-            $this->info("Temporary cache file: [" . $this->engine->getUsedLocation() . "] " . $tempFileCache);
+            
+            $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                "Temporary cache file: [" . $this->engine->getUsedLocation() . "] " . $tempFileCache);
 
             $downloaded = File::put($tempFileCache, $disk->readStream($this->getBuildAssetsS3Path($cacheArchiveFileName)));
             $downloadExists = File::exists($tempFileCache);
             $sizeMatches = $disk->size($this->getBuildAssetsS3Path($cacheArchiveFileName)) == File::size($tempFileCache);
 
             if($downloaded && $downloadExists && $sizeMatches) {
-                $this->info("Build context downloaded from S3 bucket");
+                $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                    "Build context downloaded from S3 bucket");
+
                 $tempFileCacheDir = sys_get_temp_dir() 
                     . DIRECTORY_SEPARATOR 
                     . Str::slug($this->engine->getProject()) 
@@ -53,7 +57,8 @@ Class FetchIncrementalBuildAssetsFromS3Step extends IncrementalBuildAssetsS3Base
                     . "_" . uniqid();
 
                 File::makeDirectory($tempFileCacheDir, 0755, true, true);
-                $this->info("Decompressing cache to: " . $tempFileCacheDir);
+                $this->engine->trackMilestoneProgress(class_basename($this::class), 
+                    "Decompressed cache to: " . $tempFileCacheDir);
 
                 if(! File::isDirectory($tempFileCacheDir)) {
                     $this->setFailure(255, "Error extracting the cache archive file: temporary directory could not be created");
@@ -112,6 +117,7 @@ Class FetchIncrementalBuildAssetsFromS3Step extends IncrementalBuildAssetsS3Base
                     }
                 }
 
+                $this->engine->trackMilestoneProgress(class_basename($this::class), "Build cache loaded");
                 return 0;
             } else {            
                 $this->setFailure(255, "Error uploading the build context from S3 bucket");
