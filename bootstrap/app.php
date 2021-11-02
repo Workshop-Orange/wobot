@@ -17,11 +17,11 @@ $app = new App\Application(
 
 
 if(file_exists(getcwd() . DIRECTORY_SEPARATOR . ".env")) {
-    echo "Environment local is loaded from: " . getcwd() . DIRECTORY_SEPARATOR . ".env" . "\n";
+    # echo "Environment local is loaded from: " . getcwd() . DIRECTORY_SEPARATOR . ".env" . "\n";
     $app->instance('path.env', getcwd());
     $app->useEnvironmentPath(getcwd());
 } else {
-    echo "No local environment detected\n";
+    # echo "No local environment detected\n";
 }
 
 /*
