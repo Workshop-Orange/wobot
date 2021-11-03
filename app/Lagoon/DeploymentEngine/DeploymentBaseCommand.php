@@ -34,7 +34,7 @@ abstract class DeploymentBaseCommand extends Command
         $engine->setService($service);
         $engine->setPRBase($prbase);
 
-        try {
+        try{
             $trackerFields = [
                 [
                     "title" => "Environment",
@@ -47,7 +47,7 @@ abstract class DeploymentBaseCommand extends Command
                     "short"=> true
                 ],
             ];
-    
+
             if($engine->getPRBase()) {
                 $trackerFields[] = [
                     "title" => "PR Base",
@@ -55,7 +55,12 @@ abstract class DeploymentBaseCommand extends Command
                     "short"=> true
                 ];
             }
+        } catch (Exception $ex) {
+            $this->error("Engine initialization error: " . $ex->getMessage());
+            return 255;
+        }
 
+        try {
             $engine->setLogDirectory($logDir);
             $engine->loadTrackers($deploymentFile, $trackersKey);
             $engine->startTrackMilestone($engine->getUsedLocation(), "Starting {$engine->getUsedLocation()}", $trackerFields);
@@ -81,7 +86,11 @@ abstract class DeploymentBaseCommand extends Command
             return $ret;
         } catch(Exception $ex) {
             $engine->error(empty($engine->getFailureMessage()) ? $ex->getMessage() : $engine->getFailureMessage());
-            return $engine->getFailureCode() > 0 ? $engine->getFailureCode() : 255;
+
+            $engine->endTrackMilestone($engine->getUsedLocation(), 
+                "Failed: " . empty($engine->getFailureMessage()) ? $ex->getMessage() : $engine->getFailureMessage(), $trackerFields, false);
+            
+                return $engine->getFailureCode() > 0 ? $engine->getFailureCode() : 255;
         }
     }
 }

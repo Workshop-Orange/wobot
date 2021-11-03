@@ -14,7 +14,8 @@ Class HelloStep extends StepBase implements StepInterface
     
     public function execute(): int
     {
-        $this->info("Gatsby steps starting: " . $this->engine->getUsedLocation());
+        $this->engine->trackMilestoneProgress(class_basename($this::class),
+            "Gatsby steps starting: " . $this->engine->getUsedLocation());
         
         return 0;
     }
