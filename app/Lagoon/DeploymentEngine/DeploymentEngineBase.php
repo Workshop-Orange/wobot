@@ -4,10 +4,14 @@ namespace App\Lagoon\DeploymentEngine;
 
 use App\Lagoon\DeploymentEngine\Step\StepInterface;
 use App\Wobot\EngineBase;
+use App\Wobot\EngineLogShipInterface;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 use Symfony\Component\Yaml\Yaml;
+
 
 abstract class DeploymentEngineBase extends EngineBase implements DeploymentEngineInterface
 {
@@ -33,6 +37,30 @@ abstract class DeploymentEngineBase extends EngineBase implements DeploymentEngi
         $this->environment = $environment;
         $this->service = $service;
         $this->prbase = $prbase;
+    }
+
+    public function getShippedLogStoragePath(string $file = null) : string
+    {
+        $dest =  DIRECTORY_SEPARATOR . Str::slug(empty($this->project) ? "no-project" : $this->project)
+               . DIRECTORY_SEPARATOR . Str::slug(empty($this->environment) ? "no-environment" : $this->environment)
+               . DIRECTORY_SEPARATOR . Carbon::now()->year 
+               . DIRECTORY_SEPARATOR . Carbon::now()->month;
+
+        if($this->service) {
+            $dest .= DIRECTORY_SEPARATOR . Str::slug($this->service);
+        }
+
+        if($file) {
+            $dest .= DIRECTORY_SEPARATOR . $file;
+        }
+
+        return $dest;
+    }
+
+
+    public function getDeploymentSteps() : array
+    {
+        return $this->deploymentSteps->toArray();
     }
 
     public function setProject($project) 
@@ -88,6 +116,22 @@ abstract class DeploymentEngineBase extends EngineBase implements DeploymentEngi
         } 
 
         return $ret;
+    }
+
+    public function executeDeploymentStepsCleanUp(): int
+    {
+        foreach($this->deploymentSteps as $step)
+        {
+            $stepRet = $step->cleanUp();
+            
+            if($stepRet > 0) {
+                $this->setFailure(get_class($step), $step->getReturnCode(), $step->getFailureMessage());
+                return $stepRet;
+            }
+        }
+        
+        // All steps returned 0, we're good
+        return 0;
     }
 
     public function executeDeploymentSteps(): int
@@ -172,5 +216,15 @@ abstract class DeploymentEngineBase extends EngineBase implements DeploymentEngi
         $this->trackMilestoneProgress($this->getUsedLocation(), "Steps loaded: " . $this->deploymentSteps->count());
 
         return $steps;
+    }
+
+    public function shipLogs(EngineLogShipInterface $logShipper) 
+    {
+        $this->info("Looking for logs in " . $this->logDirectory);
+        $files = collect(File::files($this->logDirectory, true))->filter(function ($value, $key) {
+            return Str::startsWith($value, $this->logDirectory . ".wobot-") && Str::endsWith($value, ".log");
+        });
+        $this->info("Found " . $files->count() . " files to ship");
+        return $logShipper->shipLogs($this, $files->toArray());
     }
 }

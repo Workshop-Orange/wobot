@@ -19,8 +19,6 @@ abstract class EngineBase implements EngineInterface
     protected $failureMessage = "";
     protected $runId;
     protected $logFile;
-    protected $logFileTracker;
-    protected $logFileTrackerCache;
     protected $usedLocation;
     protected $environment;
     protected $service;
@@ -34,12 +32,23 @@ abstract class EngineBase implements EngineInterface
         $this->runId = Carbon::now()->format("Y-m-d_H-i-s"). "-" . uniqid();
         $this->logDirectory = $logDirectory;
         $this->logFile = $this->getLogDirectory() . DIRECTORY_SEPARATOR . ".wobot-{$this->usedLocation }-log-" . $this->runId . ".log";
-        $this->logFileTracker = $this->getLogDirectory() . DIRECTORY_SEPARATOR . ".wobot-log-tracker.log";
-        $this->logFileTrackerCache = collect([]);
         $this->milestones = collect([]);
         $this->environment = $environment;
         $this->service = $service;
         $this->milestoneTrackers = collect([]);
+    }
+
+    public function getShippedLogStoragePath(string $file = null) : string
+    {
+        $dest = DIRECTORY_SEPARATOR . Str::slug($this->usedLocation) 
+            . DIRECTORY_SEPARATOR . Carbon::now()->year 
+            . DIRECTORY_SEPARATOR . Carbon::now()->month;
+
+        if($file) {
+            $dest .= DIRECTORY_SEPARATOR . $file;
+        }
+
+        return $dest;
     }
 
     public function addMilestoneTracker(EngineMilestoneTrackerInterface $milestoneTracker)
@@ -135,7 +144,6 @@ abstract class EngineBase implements EngineInterface
         $ret = $process->run();
         File::append($commandRunLogFile, "Out:\n" . $process->getOutput()."\n");
         File::append($commandRunLogFile, "Err:\n" . $process->getErrorOutput()."\n");
-        $this->trackLogFile($commandRunLogFile);
 
         $this->info("[Ret={$ret}] Run: " . implode(" " , $command));
         if($ret > 0) {
@@ -159,16 +167,6 @@ abstract class EngineBase implements EngineInterface
         return $this->runPHPCommand($fullCommandStack, $env, $timeout);
     }
 
-    public function trackLogFile($logFile)
-    {
-        touch($this->logFileTracker);
-        if(File::isWritable($this->logFileTracker)) {
-            if(! $this->logFileTrackerCache->contains($logFile)) {
-                File::append($this->logFileTracker, $logFile . "\n");
-            }
-        }
-    }
-
     public function startTrackMilestone(string $milestoneId, string $message, array $fields = [])
     {
         if(! isset($this->milestoneTrackers) || $this->milestoneTrackers->count() <= 0) {
@@ -179,6 +177,18 @@ abstract class EngineBase implements EngineInterface
         foreach($this->milestoneTrackers as $tracker) {
             $tracker->startTracker($milestoneId, $message, $fields);
         }
+    }
+
+    public function executeTrackersCleanUp(): int
+    {
+        foreach($this->milestoneTrackers as $tracker) {
+            if($ret = $tracker->cleanUp() > 0) {
+                $this->setFailure($tracker, $ret, "Tracker cleanup failed");
+                return $ret;
+            }
+        }
+        
+        return 0;
     }
 
     public function endTrackMilestone(string $milestoneId, string $message, array $fields = [], bool $isOK = true)
@@ -229,7 +239,6 @@ abstract class EngineBase implements EngineInterface
         touch($this->logFile);
         if(File::isWritable($this->logFile)) {
             File::append($this->logFile, $logStringForFile . "\n");
-            $this->trackLogFile($this->logFile);
         }
     }
 
@@ -245,7 +254,6 @@ abstract class EngineBase implements EngineInterface
         
         if($this->canSendConsoleOutput()) {
             $this->callingCommand->error($logString);
-            $this->trackLogFile($this->logFile);
         }
 
         app('log')->error($logString);
@@ -253,7 +261,6 @@ abstract class EngineBase implements EngineInterface
         touch($this->logFile);
         if(File::isWritable($this->logFile)) {
             File::append($this->logFile, $logStringForFile . "\n");
-            $this->trackLogFile($this->logFile);
         }
     }
 
@@ -276,7 +283,6 @@ abstract class EngineBase implements EngineInterface
         touch($this->logFile);
         if(File::isWritable($this->logFile)) {
             File::append($this->logFile, $logStringForFile . "\n");
-            $this->trackLogFile($this->logFile);
         }
     }
 
@@ -344,5 +350,12 @@ abstract class EngineBase implements EngineInterface
         
 
         return $this->milestoneTrackers;
+    }
+
+    
+    public function shipLogs(EngineLogShipInterface $logShipper) 
+    {
+        $this->info("Log shipping not implemented for " . class_basename($this));
+        return 0;
     }
 }

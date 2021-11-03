@@ -62,4 +62,9 @@ abstract class StepBase implements StepInterface
     {
         $this->engine->error($log, $this->usedLocation);
     }
+
+    public function cleanUp() : int
+    {
+        return 0;
+    }
 }

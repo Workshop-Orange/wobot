@@ -13,6 +13,7 @@ interface EngineInterface
     public function getMilestoneTrackers();
 
     public function loadTrackers(string $wobotConfigFilePath, string $configKey);
+    public function executeTrackersCleanUp() : int;
 
     public function setUsedLocation(string $usedLocation);
     public function getUsedLocation();
@@ -20,6 +21,7 @@ interface EngineInterface
     public function info($log, $prefix = null);
     public function error($log, $prefix = null);
     public function warn($log, $prefix = null);
+    public function shipLogs(EngineLogShipInterface $logShipper);
 
     public function trackMilestoneProgress(string $milestoneId, string $message, bool $isOK = true);
     public function startTrackMilestone(string $milestoneId, string $message, array $fields = []);
@@ -33,4 +35,6 @@ interface EngineInterface
     public function runCommand(array $command, array $env = null, int $timeout = 60) : int;
     public function runPHPCommand(array $command,  array $env = null, int $timeout = 60) : int;
     public function runLaravelArtisanCommand(array $command,  array $env = null, int $timeout = 60) : int;
+
+    public function getShippedLogStoragePath(string $file = null) : string;
 }

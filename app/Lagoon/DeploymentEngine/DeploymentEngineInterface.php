@@ -9,7 +9,9 @@ interface DeploymentEngineInterface extends EngineInterface
 {
     public function registerDeploymentStep(StepInterface $step);
     public function executeDeploymentSteps(): int;
+    public function executeDeploymentStepsCleanUp(): int;
     public function loadSteps(string $wobotConfigFilePath, string $configKey) : array;
+    public function getDeploymentSteps() : array;
     public function setProject(string $project);
     public function getProject();
     public function getEnvironment();

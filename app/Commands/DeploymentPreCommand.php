@@ -13,6 +13,7 @@ class DeploymentPreCommand extends DeploymentBaseCommand
      * @var string
      */
     protected $signature = 'deployment:pre 
+        {--clean-up : Should the command clean up after itself - typically the post-build step}
         {--wobot-conf=./.wobot.yml : Specify the wobot config file to use}
         {--steps-key=deployment.pre : Specify the dot notation key of deployment steps to use}
         {--trackers-key=deployment.trackers : Specify the dot notation key of tracker configuration to use}

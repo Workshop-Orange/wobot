@@ -29,4 +29,21 @@ abstract class EngineMilestoneTrackerBase implements EngineMilestoneTrackerInter
     {
         $this->config = collect($config);
     }
+
+    public function cleanUp(): int
+    {
+        if($this->deploymentthreadFile) {
+            $this->engine->info("Removing deployment thread file: " . $this->deploymentthreadFile);
+            if(File::exists($this->deploymentthreadFile)) {
+                File::delete($this->deploymentthreadFile);
+            }
+        
+            if(File::exists($this->deploymentthreadFile)) {
+                $this->engine->setFailure(class_basename($this), 255, "Could not delete file: " . $this->deploymentthreadFile);
+                return 255;
+            }
+        }
+
+        return 0;
+    }
 }

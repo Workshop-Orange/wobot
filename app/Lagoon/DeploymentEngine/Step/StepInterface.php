@@ -19,4 +19,6 @@ interface StepInterface
     public function setFailure(int $code, string $message);
     public function getFailureMessage() : string;
     public function getReturnCode() : int;
+
+    public function cleanUp() : int;
 }

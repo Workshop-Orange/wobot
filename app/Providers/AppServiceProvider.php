@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Lagoon\DeploymentEngine\Engine;
 use App\Sanity\SanityEngine;
 use App\Lagoon\NewRelicEngine;
+use App\Wobot\EngineLogShipS3;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -52,6 +53,18 @@ class AppServiceProvider extends ServiceProvider
             );
 
             return $engine;
+        });
+
+        $this->app->singleton('EngineLogShipper', function() {
+            $engingLogShipper = new EngineLogShipS3(
+                env('WOBOT_LOG_STORE_S3_KEY'), 
+                env('WOBOT_LOG_STORE_S3_SECRET'),
+                env('WOBOT_LOG_STORE_S3_REGION'),
+                env('WOBOT_LOG_STORE_S3_BUCKET')
+            );
+
+            return $engingLogShipper;
+
         });
     }
 }

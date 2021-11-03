@@ -18,6 +18,7 @@ abstract class DeploymentBaseCommand extends Command
     public function laggonBaseHandle(string $usedLocation)
     {
         $deploymentFile = $this->option("wobot-conf");
+        $cleanUp = $this->option("clean-up");
         $stepsKey = $this->option("steps-key");
         $trackersKey = $this->option("trackers-key");
         $logDir = $this->option("log-dir");
@@ -81,6 +82,20 @@ abstract class DeploymentBaseCommand extends Command
     
             if ($ret > 255) {
                 $ret = 255;
+            }
+
+            if($cleanUp) {
+                $this->info("Cleaning up deployment steps");
+                if($ret = $engine->executeDeploymentStepsCleanUp() > 0) {
+                    $this->error($engine->getFailureClass() ." [" . $engine->getFailureCode() . "] " . $engine->getFailureMessage());
+                    return $ret;
+                }
+
+                $this->info("Cleaning up trackers steps");
+                if($ret = $engine->executeTrackersCleanUp() > 0) {
+                    $this->error($engine->getFailureClass() ." [" . $engine->getFailureCode() . "] " . $engine->getFailureMessage());
+                    return $ret;
+                }
             }
 
             return $ret;
