@@ -84,6 +84,10 @@ abstract class DeploymentBaseCommand extends Command
                 $ret = 255;
             }
 
+            if($ret > 0) {
+                return $ret;
+            }
+
             if($cleanUp) {
                 $this->info("Cleaning up deployment steps");
                 if($ret = $engine->executeDeploymentStepsCleanUp() > 0) {
