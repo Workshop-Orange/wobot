@@ -90,8 +90,8 @@ class HorizonCommand extends Command
                 
                 if ($ret > 0) {
                     $engine->error("Step failed: " . $engine->getFailureClass() ." [" . $engine->getFailureCode() . "] " . $engine->getFailureMessage());
-                    $engine->info("Holding off for 3 seconds");
-                    sleep(3);
+                    $engine->info("Holding off for 8 seconds");
+                    sleep(8);
                 } else {
                     $engine->info("All steps completed successfully. Horizon can start.");
                     
