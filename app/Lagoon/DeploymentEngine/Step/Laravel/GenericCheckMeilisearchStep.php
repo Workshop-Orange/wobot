@@ -55,6 +55,7 @@ Class GenericCheckMeilisearchStep extends StepBase implements StepInterface
                 $this->engine->trackMilestoneProgress(class_basename($this::class), 
                     "Found an API key");
                 $headers['X-Meili-API-Key'] = $key;
+                $headers['Authorization'] = "Bearer " . $key;
             }
 
             $response = Http::timeout(3)->withHeaders($headers)->get($stats);
