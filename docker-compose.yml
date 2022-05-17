@@ -1,0 +1,16 @@
+version: '2.3'
+
+services:
+  # SERVICE: Laravel cli container
+  cli:
+    networks:
+      - default
+    build:
+      context: .
+      dockerfile: lagoon/cli.dockerfile
+    image: &cli-image ${COMPOSE_PROJECT_NAME:-wo-webapp-proworkers-us}-cli # this image will be reused as `CLILARAVEL_IMAGE` in subsequent Docker builds
+    volumes:
+      - ./:/app:delegated
+      - ../wobot/:/wobot:delegated
+    volumes_from: ### mount the ssh-agent from the pygmy or cachalot ssh-agent. Automatically removed in CI.
+      - container:amazeeio-ssh-agent ### Local overrides to mount host SSH keys. Automatically removed in CI.
