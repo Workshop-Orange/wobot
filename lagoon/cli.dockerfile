@@ -6,6 +6,7 @@ FROM amazeeio/php:8.1-cli
 RUN docker-php-ext-install pcntl
 RUN docker-php-ext-install posix
 RUN docker-php-ext-install exif
+COPY lagoon/php.ini /usr/local/etc/php/php.ini
 
 #######################################################
 # Install Laoon Tools Globally
