@@ -34,7 +34,7 @@ Class GenericPrepareDatabaseMigrateStep extends StepBase implements StepInterfac
                 return $this->getReturnCode();
             }
 
-            $migrateRet = $this->engine->runLaravelArtisanCommand(["migrate"]);
+            $migrateRet = $this->engine->runLaravelArtisanCommand(["migrate","--force"]);
             if($migrateRet > 0) {
                 $this->setFailure($migrateRet, "Error migrating database");
                 $this->engine->trackMilestoneProgress(class_basename($this::class), 
